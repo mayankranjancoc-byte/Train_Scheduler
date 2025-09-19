@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Train Timeline</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.20.0.min.js"></script>
+  <style>
+    #timelineDiv { 
+      width: 100%; 
+      height: 600px; 
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: white;
+    }
+    .legend-swatch { 
+      display: inline-block; 
+      width: 12px; 
+      height: 12px; 
+      margin-right: 6px; 
+      vertical-align: middle; 
+      border-radius: 2px;
+    }
+    .header-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .btn-group {
+      margin-top: 10px;
+    }
+    body {
+      background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+    }
+    .instructions {
+      background: #f8f9fa;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-container">
+      <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+          <h4 class="mb-1">Train Timeline View</h4>
+          <small class="text-muted">Bars show arrival → departure on each platform. Conflicts highlighted in red.</small>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-outline-secondary me-2" href="#">← Dashboard</a>
+          <a class="btn btn-outline-primary me-2" href="#">Download JSON</a>
+          <button id="fitBtn" class="btn btn-primary">Fit To Window</button>
+        </div>
+      </div>
+      
+      <div class="mt-3">
+        <span class="me-3"><span class="legend-swatch" style="background:#4a90e2"></span> Normal</span>
+        <span class="me-3"><span class="legend-swatch" style="background:#e74c3c"></span> Conflict</span>
+        <span class="me-3"><span class="legend-swatch" style="background:#2ecc71"></span> Completed</span>
+        <span><span class="legend-swatch" style="background:#f39c12"></span> Delayed</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="container my-3">
+      <div class="row g-2 align-items-center">
+        <!-- Platform filter -->
+        <div class="col-md-3">
+          <label for="platformFilter" class="form-label">Platform</label>
+          <select id="platformFilter" class="form-select">
+            <option value="">All Platforms</option>
+          </select>
+        </div>
+
+        <!-- Status filter -->
+        <div class="col-md-3">
+          <label for="statusFilter" class="form-label">Status</label>
+          <select id="statusFilter" class="form-select">
+            <option value="">All Status</option>
+            <option>Scheduled</option>
+            <option>On Time</option>
+            <option>Boarding</option>
+            <option>Delayed</option>
+            <option>Completed</option>
+            <option>Conflict</option>
+          </select>
+        </div>
+
+        <!-- Priority filter -->
+        <div class="col-md-3">
+          <label for="priorityFilter" class="form-label">Priority</label>
+          <select id="priorityFilter" class="form-select">
+            <option value="">All Priorities</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+
+        <!-- Apply button -->
+        <div class="col-md-3 d-flex align-items-end">
+          <button id="applyFilters" class="btn btn-primary w-100">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="timelineDiv"></div>
+    
+    <div class="instructions mt-4">
+      <h6>How to use:</h6>
+      <ul class="mb-0">
+        <li>Hover over timeline bars to see train details</li>
+        <li>Click and drag to pan the timeline</li>
+        <li>Use the scroll wheel to zoom in and out</li>
+        <li>Click "Fit To Window" to reset the view</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    let allTrains = [];      // stores original items
+    let platformOrder = [];  // stores platform order
+
+    // Utility: filter function
+    function getFilteredItems() {
+      const platform = document.getElementById('platformFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      const priority = document.getElementById('priorityFilter').value;
+
+      return allTrains.filter(item => {
+        return (!platform || item.platform_label === platform) &&
+               (!status || item.status === status) &&
+               (!priority || item.priority === priority);
+      });
+    }
+
+    // Render function
+    function renderTimeline(data = allTrains) {
+      if (!data || data.length === 0) {
+        document.getElementById('timelineDiv').innerHTML = `
+          <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="text-center">
+              <h5 class="text-muted">No train data available</h5>
+              <p class="text-muted">Try adjusting your filters or check back later</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const traces = data.map(item => {
+        const base = item.start_ms;
+        const length = item.duration_ms;
+        const y = item.platform_label;
+
+        const start = new Date(item.start_ms);
+        const end = new Date(item.end_ms);
+        const hoverText = `
+          <b>${item.name}</b><br>
+          Platform: ${y}<br>
+          ${start.toLocaleTimeString()} → ${end.toLocaleTimeString()}<br>
+          Duration: ${Math.round(item.duration_ms / (60 * 1000))} minutes<br>
+          Status: ${item.status}<br>
+          Priority: ${item.priority}
+        `;
+
+        return {
+          x: [length],
+          y: [y],
+          base: [base],
+          orientation: 'h',
+          type: 'bar',
+          name: item.name,
+          hoverinfo: 'text',
+          text: [hoverText],
+          marker: { 
+            color: item.color, 
+            line: { width: 2, color: item.status === 'Conflict' ? '#e74c3c' : '#34495e' }
+          },
+          hoverlabel: { align: "left", bgcolor: "#2c3e50", font: { color: "white" } },
+          showlegend: false
+        };
+      });
+
+      const layout = {
+        barmode: 'overlay',
+        height: Math.max(400, data.length * 40),
+        margin: { l: 120, r: 30, t: 30, b: 60 },
+        xaxis: {
+          type: 'date',
+          tickformat: '%H:%M',
+          tickangle: -45,
+          title: 'Time',
+          gridcolor: '#eee',
+          gridwidth: 1
+        },
+        yaxis: {
+          type: 'category',
+          categoryorder: 'array',
+          categoryarray: platformOrder,
+          automargin: true,
+          title: 'Platform',
+          gridcolor: '#eee',
+          gridwidth: 1
+        },
+        plot_bgcolor: 'rgba(0,0,0,0.02)',
+        paper_bgcolor: '#fff',
+        legend: { orientation: 'h', x: 0, y: -0.2 }
+      };
+
+      Plotly.newPlot('timelineDiv', traces, layout, {responsive: true});
+    }
+
+    // Load data
+    async function loadTimeline() {
+      try {
+        const response = await fetch("/timeline_data");
+        const data = await response.json();
+        allTrains = data.items;
+        platformOrder = data.platform_order;
+
+        // populate platform filter
+        const select = document.getElementById("platformFilter");
+        select.innerHTML = '<option value="">All Platforms</option>';
+        platformOrder.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          select.appendChild(opt);
+        });
+
+        renderTimeline(allTrains);
+
+        // Fit-to-window button
+        document.getElementById('fitBtn').onclick = () => {
+          if (!allTrains.length) return;
+          const starts = allTrains.map(i => i.start_ms);
+          const ends = allTrains.map(i => i.end_ms);
+          Plotly.relayout('timelineDiv', {
+            'xaxis.range': [new Date(Math.min(...starts) - 10*60*1000),
+                            new Date(Math.max(...ends) + 10*60*1000)]
+          });
+        };
+
+        // Filter button
+        document.getElementById('applyFilters').onclick = () => {
+          renderTimeline(getFilteredItems());
+        };
+
+      } catch (err) {
+        console.error("Error loading timeline:", err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadTimeline);
+    window.addEventListener('resize', () => Plotly.Plots.resize('timelineDiv'));
+  </script>
+</body>
+</html>
