@@ -1,74 +1,113 @@
 <!-- templates/precedence.html -->
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Precedence Order</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .table {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .badge-route {
+      font-family: monospace;
+    }
+  </style>
 </head>
+
 <body class="bg-light">
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h1 class="h4 mb-0">Precedence Order <small class="text-muted">(Higher priority first)</small></h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0 text-primary"><i class="bi bi-sort-numeric-down"></i> Precedence Order <small
+          class="text-muted h6">(Higher priority first)</small></h1>
       <div>
-        <a class="btn btn-outline-secondary btn-sm me-2" href="{{ url_for('dashboard') }}">← Dashboard</a>
-        <a class="btn btn-outline-primary btn-sm" href="{{ url_for('download_schedule') }}">Download JSON</a>
+        <a class="btn btn-outline-secondary btn-sm me-2" href="{{ url_for('dashboard') }}"><i
+            class="bi bi-arrow-left"></i> Dashboard</a>
+        <a class="btn btn-outline-primary btn-sm" href="{{ url_for('download_schedule') }}"><i
+            class="bi bi-download"></i> Download JSON</a>
       </div>
     </div>
 
     {% if trains|length == 0 %}
-      <div class="alert alert-info">No trains found.</div>
+    <div class="alert alert-info shadow-sm"><i class="bi bi-info-circle"></i> No trains found.</div>
     {% else %}
-      <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle bg-white">
-          <thead class="table-dark">
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Name</th>
-              <th scope="col">Type</th>
-              <th scope="col">Priority</th>
-              <th scope="col">Route</th>
-              <th scope="col">Status</th>
-              <th scope="col">Arrival</th>
-              <th scope="col">Departure</th>
-              <th scope="col">Platform</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for t in trains %}
-            <tr>
-              <td>{{ loop.index }}</td>
-              <td>{{ t.name }}</td>
-              <td>{{ t.type or '-' }}</td>
-              <td>
-                <span class="badge
-                  {% if t.priority is not none and t.priority >= 3 %} bg-danger
-                  {% elif t.priority == 2 %} bg-warning text-dark
-                  {% else %} bg-secondary
-                  {% endif %}">
-                  {{ t.priority or 0 }}
-                </span>
-              </td>
-              <td>{{ t.route or '-' }}</td>
-              <td>
-                <span class="badge
-                  {% if t.status == 'delayed' %} bg-danger
-                  {% elif t.status == 'on time' %} bg-success
-                  {% else %} bg-secondary
-                  {% endif %}">
-                  {{ t.status or '-' }}
-                </span>
-              </td>
-              <td>{{ t.arrival_time or '-' }}</td>
-              <td>{{ t.departure_time or '-' }}</td>
-              <td>{{ '-' if t.platform is none else t.platform }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle mb-0">
+            <thead class="table-primary text-nowrap">
+              <tr>
+                <th scope="col"><i class="bi bi-hash"></i></th>
+                <th scope="col"><i class="bi bi-train-front"></i> Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Route</th>
+                <th scope="col">Status</th>
+                <th scope="col"><i class="bi bi-box-arrow-in-right"></i> Arr</th>
+                <th scope="col"><i class="bi bi-box-arrow-right"></i> Dep</th>
+                <th scope="col">Plat</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in trains %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td class="fw-bold text-primary">{{ t.name }}</td>
+                <td>
+                  {% if t.type == 'express' %}
+                  <span class="badge bg-info text-dark"><i class="bi bi-lightning-fill"></i> Express</span>
+                  {% elif t.type == 'local' %}
+                  <span class="badge bg-secondary"><i class="bi bi-people-fill"></i> Local</span>
+                  {% elif t.type == 'freight' %}
+                  <span class="badge bg-dark"><i class="bi bi-box-seam"></i> Freight</span>
+                  {% else %}
+                  <span class="badge bg-light text-dark">{{ t.type or '-' }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge
+                          {% if t.priority is not none and t.priority >= 3 %} bg-danger
+                          {% elif t.priority == 2 %} bg-warning text-dark
+                          {% else %} bg-secondary
+                          {% endif %} rounded-pill">
+                    {{ t.priority or 0 }}
+                  </span>
+                </td>
+                <td><span class="badge-route text-muted">{{ t.route or '-' }}</span></td>
+                <td>
+                  <span class="badge
+                          {% if t.status == 'delayed' %} bg-warning text-dark
+                          {% elif t.status == 'cancelled' %} bg-danger
+                          {% elif t.status == 'on time' %} bg-success
+                          {% else %} bg-secondary
+                          {% endif %}">
+                    {{ t.status or '-' }}
+                  </span>
+                </td>
+                <td>{{ t.arrival_time or '-' }}</td>
+                <td>{{ t.departure_time or '-' }}</td>
+                <td><span class="badge bg-light text-dark border">{{ '-' if t.platform is none else t.platform }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
+    </div>
     {% endif %}
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

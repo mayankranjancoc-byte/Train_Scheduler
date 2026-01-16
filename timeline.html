@@ -1,45 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Train Timeline</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <script src="https://cdn.plot.ly/plotly-2.20.0.min.js"></script>
   <style>
-    #timelineDiv { 
-      width: 100%; 
-      height: 600px; 
+    #timelineDiv {
+      width: 100%;
+      height: 600px;
       border: 1px solid #ddd;
       border-radius: 5px;
       background: white;
     }
-    .legend-swatch { 
-      display: inline-block; 
-      width: 12px; 
-      height: 12px; 
-      margin-right: 6px; 
-      vertical-align: middle; 
+
+    .legend-swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+      vertical-align: middle;
       border-radius: 2px;
     }
+
     .header-container {
       background: white;
       border-radius: 8px;
       padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
     }
+
     .btn-group {
       margin-top: 10px;
     }
+
     body {
       background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
       min-height: 100vh;
       padding: 20px;
     }
+
     .container {
       max-width: 1400px;
     }
+
     .instructions {
       background: #f8f9fa;
       border-radius: 5px;
@@ -49,21 +57,25 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header-container">
       <div class="d-flex justify-content-between align-items-start flex-wrap">
         <div>
-          <h4 class="mb-1">Train Timeline View</h4>
-          <small class="text-muted">Bars show arrival → departure on each platform. Conflicts highlighted in red.</small>
+          <h4 class="mb-1"><i class="bi bi-calendar-range"></i> Train Timeline View</h4>
+          <small class="text-muted">Bars show arrival → departure on each platform. Conflicts highlighted in
+            red.</small>
         </div>
         <div class="btn-group">
-          <a class="btn btn-outline-secondary me-2" href="#">← Dashboard</a>
-          <a class="btn btn-outline-primary me-2" href="#">Download JSON</a>
-          <button id="fitBtn" class="btn btn-primary">Fit To Window</button>
+          <a class="btn btn-outline-secondary me-2" href="{{ url_for('dashboard') }}"><i class="bi bi-arrow-left"></i>
+            Dashboard</a>
+          <a class="btn btn-outline-primary me-2" href="{{ url_for('download_schedule') }}"><i
+              class="bi bi-download"></i> Download JSON</a>
+          <button id="fitBtn" class="btn btn-primary"><i class="bi bi-arrows-fullscreen"></i> Fit To Window</button>
         </div>
       </div>
-      
+
       <div class="mt-3">
         <span class="me-3"><span class="legend-swatch" style="background:#4a90e2"></span> Normal</span>
         <span class="me-3"><span class="legend-swatch" style="background:#e74c3c"></span> Conflict</span>
@@ -77,7 +89,7 @@
       <div class="row g-2 align-items-center">
         <!-- Platform filter -->
         <div class="col-md-3">
-          <label for="platformFilter" class="form-label">Platform</label>
+          <label for="platformFilter" class="form-label"><i class="bi bi-signpost-2"></i> Platform</label>
           <select id="platformFilter" class="form-select">
             <option value="">All Platforms</option>
           </select>
@@ -85,7 +97,7 @@
 
         <!-- Status filter -->
         <div class="col-md-3">
-          <label for="statusFilter" class="form-label">Status</label>
+          <label for="statusFilter" class="form-label"><i class="bi bi-info-circle"></i> Status</label>
           <select id="statusFilter" class="form-select">
             <option value="">All Status</option>
             <option>Scheduled</option>
@@ -99,7 +111,7 @@
 
         <!-- Priority filter -->
         <div class="col-md-3">
-          <label for="priorityFilter" class="form-label">Priority</label>
+          <label for="priorityFilter" class="form-label"><i class="bi bi-sort-numeric-down"></i> Priority</label>
           <select id="priorityFilter" class="form-select">
             <option value="">All Priorities</option>
             <option>High</option>
@@ -110,20 +122,20 @@
 
         <!-- Apply button -->
         <div class="col-md-3 d-flex align-items-end">
-          <button id="applyFilters" class="btn btn-primary w-100">Apply Filters</button>
+          <button id="applyFilters" class="btn btn-primary w-100"><i class="bi bi-filter"></i> Apply Filters</button>
         </div>
       </div>
     </div>
 
     <div id="timelineDiv"></div>
-    
+
     <div class="instructions mt-4">
-      <h6>How to use:</h6>
-      <ul class="mb-0">
-        <li>Hover over timeline bars to see train details</li>
-        <li>Click and drag to pan the timeline</li>
-        <li>Use the scroll wheel to zoom in and out</li>
-        <li>Click "Fit To Window" to reset the view</li>
+      <h6><i class="bi bi-lightbulb"></i> How to use:</h6>
+      <ul class="mb-0" style="list-style-type: none; padding-left: 0;">
+        <li><i class="bi bi-mouse"></i> Hover over timeline bars to see train details</li>
+        <li><i class="bi bi-arrows-move"></i> Click and drag to pan the timeline</li>
+        <li><i class="bi bi-zoom-in"></i> Use the scroll wheel to zoom in and out</li>
+        <li><i class="bi bi-arrow-repeat"></i> Click "Fit To Window" to reset the view</li>
       </ul>
     </div>
   </div>
@@ -140,8 +152,8 @@
 
       return allTrains.filter(item => {
         return (!platform || item.platform_label === platform) &&
-               (!status || item.status === status) &&
-               (!priority || item.priority === priority);
+          (!status || item.status === status) &&
+          (!priority || item.priority === priority);
       });
     }
 
@@ -151,7 +163,7 @@
         document.getElementById('timelineDiv').innerHTML = `
           <div class="d-flex justify-content-center align-items-center h-100">
             <div class="text-center">
-              <h5 class="text-muted">No train data available</h5>
+              <h5 class="text-muted"><i class="bi bi-inbox"></i> No train data available</h5>
               <p class="text-muted">Try adjusting your filters or check back later</p>
             </div>
           </div>
@@ -184,8 +196,8 @@
           name: item.name,
           hoverinfo: 'text',
           text: [hoverText],
-          marker: { 
-            color: item.color, 
+          marker: {
+            color: item.color,
             line: { width: 2, color: item.status === 'Conflict' ? '#e74c3c' : '#34495e' }
           },
           hoverlabel: { align: "left", bgcolor: "#2c3e50", font: { color: "white" } },
@@ -219,7 +231,7 @@
         legend: { orientation: 'h', x: 0, y: -0.2 }
       };
 
-      Plotly.newPlot('timelineDiv', traces, layout, {responsive: true});
+      Plotly.newPlot('timelineDiv', traces, layout, { responsive: true });
     }
 
     // Load data
@@ -248,8 +260,8 @@
           const starts = allTrains.map(i => i.start_ms);
           const ends = allTrains.map(i => i.end_ms);
           Plotly.relayout('timelineDiv', {
-            'xaxis.range': [new Date(Math.min(...starts) - 10*60*1000),
-                            new Date(Math.max(...ends) + 10*60*1000)]
+            'xaxis.range': [new Date(Math.min(...starts) - 10 * 60 * 1000),
+            new Date(Math.max(...ends) + 10 * 60 * 1000)]
           });
         };
 
@@ -267,4 +279,5 @@
     window.addEventListener('resize', () => Plotly.Plots.resize('timelineDiv'));
   </script>
 </body>
+
 </html>

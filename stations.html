@@ -1,42 +1,63 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>Station Management</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
-<body class="p-4">
+
+<body class="p-4 bg-light">
   <div class="container">
-    <h1 class="mb-4">🏙️ Station Management</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="text-primary"><i class="bi bi-buildings-fill"></i> Station Management</h1>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to
+        Dashboard</a>
+    </div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="mb-3">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
+    {% if messages %}
+    <div class="mb-3">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
 
     <!-- Add New Station Form -->
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm border-0">
+      <div class="card-header bg-white">
+        <h4 class="mb-0 text-secondary"><i class="bi bi-plus-circle"></i> Add New Station</h4>
+      </div>
       <div class="card-body">
-        <h4 class="mb-3">Add New Station</h4>
         <form method="POST" action="{{ url_for('add_station') }}">
           <div class="row g-2">
             <div class="col-md-4">
-              <input type="text" name="name" class="form-control" placeholder="Station Name" required>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-sign-stop"></i></span>
+                <input type="text" name="name" class="form-control" placeholder="Station Name" required>
+              </div>
             </div>
             <div class="col-md-2">
-              <input type="text" name="code" class="form-control" placeholder="Code (e.g. NDLS)" required>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                <input type="text" name="code" class="form-control" placeholder="Code" required>
+              </div>
             </div>
             <div class="col-md-4">
-              <input type="text" name="city" class="form-control" placeholder="City" required>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                <input type="text" name="city" class="form-control" placeholder="City" required>
+              </div>
             </div>
             <div class="col-md-2">
-              <button type="submit" class="btn btn-primary w-100">Add</button>
+              <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Add</button>
             </div>
           </div>
         </form>
@@ -44,34 +65,42 @@
     </div>
 
     <!-- Station Table -->
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Code</th>
-            <th>City</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for station in stations %}
-          <tr>
-            <td>{{ station.id }}</td>
-            <td>{{ station.name }}</td>
-            <td>{{ station.code }}</td>
-            <td>{{ station.city }}</td>
-            <td>
-              <a href="{{ url_for('edit_station', station_id=station.id) }}" class="btn btn-info btn-sm">Edit</a>
-              <a href="{{ url_for('delete_station', station_id=station.id) }}" class="btn btn-danger btn-sm"
-                 onclick="return confirm('Are you sure you want to delete this station?');">Delete</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle mb-0">
+            <thead class="table-primary">
+              <tr>
+                <th><i class="bi bi-hash"></i> ID</th>
+                <th><i class="bi bi-sign-stop-fill"></i> Name</th>
+                <th><i class="bi bi-upc"></i> Code</th>
+                <th><i class="bi bi-geo-alt-fill"></i> City</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for station in stations %}
+              <tr>
+                <td>{{ station.id }}</td>
+                <td class="fw-bold">{{ station.name }}</td>
+                <td><span class="badge bg-secondary">{{ station.code }}</span></td>
+                <td>{{ station.city }}</td>
+                <td>
+                  <a href="{{ url_for('edit_station', station_id=station.id) }}" class="btn btn-outline-info btn-sm"
+                    title="Edit"><i class="bi bi-pencil-square"></i></a>
+                  <a href="{{ url_for('delete_station', station_id=station.id) }}" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('Are you sure you want to delete this station?');" title="Delete"><i
+                      class="bi bi-trash"></i></a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
